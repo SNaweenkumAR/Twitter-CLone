@@ -18,7 +18,6 @@ app.use('/api/auth', authRoute)
 
 
 
-
 app.listen(PORT,() => {console.log(`Server Running at localhost:${PORT}`)
   connectDB()
 })          
