@@ -98,6 +98,34 @@ export const login = async (req,res) =>{
          }
 }
 
-export const logout = (req,res) =>{
-    res.send("logout cont")
+
+//logout
+
+export const logout = async (req,res) =>{
+  try {
+          res.cookie('jwt'," " , { 
+            maxAge:0
+          } )
+          res.status(200).json({message:"Logout Successfully"})
+  } catch (error) {
+    console.log(`Error in Logout Controller : ${error}`)
+    res.status(500).json({error : "Internal server error"})
+  }
 }
+
+
+//get ME - to check you are already in our database
+
+
+ export const getMe = async(req,res) => {
+              try {
+
+                const user = await User.findOne({ _id : req.user._id}).select("-password");
+                res.status(200).json({user});
+
+                
+              } catch (error) {
+                console.log(`Error in getMe Controller : ${error}`)
+                res.status(500).json({error : "Internal server error"})
+              }
+ }

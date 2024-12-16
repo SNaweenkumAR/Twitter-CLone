@@ -9,6 +9,9 @@ const PORT = process.env.PORT
 import authRoute from './routes/auth.route.js'
 import connectDB from './db/connectDB.js';
 
+import cookieParser from 'cookie-parser';
+app.use(cookieParser())
+
 app.use(express.json());
 
 app.use('/api/auth', authRoute)
