@@ -168,11 +168,11 @@ export const followUnfollowUser = async (req, res) => {
              const isMatch = await bcrypt.compare(currentPassword ,user.password );
 
              if(!isMatch){
-              return req.status(400).json({error : "Current Password is Incorrect"})
+              return res.status(400).json({error : "Current Password is Incorrect"})
              }
 
              if(newPassword.length <6){
-              return req.status(400).json({error : " Password Must be 6 Characters"})
+              return res.status(400).json({error : " Password Must be 6 Characters"})
              }
 
              const salt = await bcrypt.genSalt(10)
