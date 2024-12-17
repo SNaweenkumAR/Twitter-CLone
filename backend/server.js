@@ -10,11 +10,14 @@ import authRoute from './routes/auth.route.js'
 import connectDB from './db/connectDB.js';
 
 import cookieParser from 'cookie-parser';
+import userRoute from './routes/user.route.js'
+
 app.use(cookieParser())
 
 app.use(express.json());
 
 app.use('/api/auth', authRoute)
+app.use('/api/users',userRoute)
 
 
 
