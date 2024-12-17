@@ -1,9 +1,10 @@
+import Notification from "../model/notification.model.js";
 import User from "../model/user.model.js";
 
 export const getProfile = async(req,res) => {
     try {
         const {username}=req.params;
-        const user = await User.findOne({username}).select("-password")
+        const user = await User.findOne({username})
 
         if(!user){
             return res.status(400).json({error: "User not found"})
@@ -82,17 +83,63 @@ export const followUnfollowUser = async (req, res) => {
       const isFollowing = currUser.following.includes(id);
   
       if (isFollowing) {
+          //unfollow
         await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
         await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+
+
         return res.status(200).json({ message: "Successfully unfollowed" });
       } else {
+        //follow
         await User.findByIdAndUpdate(id, { $addToSet: { followers: req.user._id } });
         await User.findByIdAndUpdate(req.user._id, { $addToSet: { following: id } });
+
+        const newNotification = new Notification({
+              type:"follow",
+              from:req.user._id,
+              to:userToModify._id 
+        })
+          
+        await newNotification.save();
+
         return res.status(200).json({ message: "Followed successfully" });
       }
     } catch (error) {
-      console.error(`Error in followUnfollowUser Controller: ${error.message}`);
+      console.error(`Error in follow/Unfollow User Controller: ${error.message}`);
       return res.status(500).json({ error: "Internal server error" });
     }
   };
+
+
+  export const getSuggestedUser = async(req,res) => {
+    try {
+      
+      const userId = req.user._id;
+      const userFollowed = await User.findById({_id:userId}).select("-password");
+
+      const users = await User.aggregate([
+         {
+          $match:{
+            _id: { $ne :userId},
+           }
+           },{
+            $sample:{
+              size:10
+             }
+           }
+      ])
+
+      const filteredUser = users.filter((user) => !userFollowed.following.includes(user._id));
+      const SuggestedUsers = filteredUser.slice(0,4);
+
+    //  SuggestedUsers.array.forEach( (user) => (user.password = null));
+        SuggestedUsers.forEach((user) => (user.password = null));
+      res.status(200).json(SuggestedUsers)
+
+
+    } catch (error) {
+      console.error(`Error in Suggested User Controller: ${error.message}`);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
   
