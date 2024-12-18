@@ -1,6 +1,8 @@
 import User from "../model/user.model.js";
 import cloudinary from "cloudinary"
 import Post from "../model/post.model.js";
+import Notification from "../model/notification.model.js";
+import mongoose from "mongoose";
 
 
  export const createPost = async (req,res) => {
@@ -67,6 +69,52 @@ import Post from "../model/post.model.js";
 
     } catch (error) {
         console.log(`Error in Delete Post Controller:${error}`)
+        res.status(500).json({error:"Internal server Error"})
+    }
+ }
+
+
+ export const createComment = async(req,res) => {
+    try {
+        
+           const {text} = req.body;
+           const postId = req.params.id;
+           const userId =req.user._id;
+           
+
+
+           if(!text){
+            return res.status(400).json({error : "Comment text is required"})
+           }
+
+           
+    // Validate postId format
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+        return res.status(400).json({ error: "Invalid Post ID" });
+      }
+
+           const post  =  await Post.findOne({_id : postId})
+
+           if(!post){
+            return res.status(404).json({error : "Post is Not Found"})
+           }
+
+           const comment ={
+            user :userId,
+            text
+           }
+
+              post.comments.push(comment)
+              await post.save();
+              res.status(200).json(post);
+
+;
+
+   
+
+
+    } catch (error) {
+        console.log(`Error in Create Comment Controller:${error}`)
         res.status(500).json({error:"Internal server Error"})
     }
  }
