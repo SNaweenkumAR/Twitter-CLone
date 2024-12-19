@@ -43,7 +43,6 @@ import mongoose from "mongoose";
  }
 
 
-
  export const  deletePost = async (req,res) =>{
     try {
 
@@ -118,3 +117,106 @@ import mongoose from "mongoose";
         res.status(500).json({error:"Internal server Error"})
     }
  }
+
+
+ export const likeUnlikePost = async (req, res) => {
+   try {
+     const userId = req.user._id; // User performing the like/unlike action
+     const { id: postId } = req.params; // Post ID from request parameters
+ 
+     // Find the post by ID
+     const post = await Post.findOne({ _id: postId });
+ 
+     if (!post) {
+       return res.status(404).json({ error: "Post not found" });
+     }
+ 
+     // Check if the user has already liked the post
+     const userLikePost = post.likes.includes(userId);
+ 
+     if (userLikePost) {
+       // Unlike the post
+       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+       await  User.updateOne({_id:userId},{$pull : {likedPosts :postId }})
+
+       return res.status(200).json({ message: "Post unliked successfully" });
+     } else {
+       // Like the post
+       await Post.updateOne({ _id: postId }, { $addToSet: { likes: userId } });
+       await  User.updateOne({_id:userId},{$addToSet : {likedPosts :postId }})
+ 
+       // Create a notification for the like
+       const notification = new Notification({
+         from: userId,
+         to: post.user,
+         type: "like",
+       });
+       await notification.save();
+ 
+       return res.status(200).json({ message: "Post liked successfully" });
+     }
+   } catch (error) {
+     console.error(`Error in Like/Unlike Controller: ${error.message}`);
+     res.status(500).json({ error: "Internal server Error" });
+   }
+ };
+
+
+ export const getAllPosts = async (req, res) => {
+    try {
+      const posts = await Post.find()
+        .sort({ createdAt: -1 }) // Sort by newest to oldest
+        .populate({
+          path: "user",
+          select: "-password", // Exclude the password field
+        })
+        .populate({
+          path: "comments.user", // Populate the user field inside comments
+          select: ["-password", "-email" ,"-following","-followers","-link","-bio"]// Exclude the password field
+        });
+  
+      if (!posts || posts.length === 0) {
+        return res.status(200).json([]); // Return an empty array if no posts
+      }
+  
+      res.status(200).json(posts);
+    } catch (error) {
+      console.error(`Error in Get All Posts Controller: ${error.message}`);
+      res.status(500).json({ error: "Internal server Error" });
+    }
+  };
+
+
+  export const getLikedPosts = async(req,res) => {
+    try {
+        
+        const userId = req.params.id;
+        const user  = await User.findById({_id : userId})
+
+        if(!user){
+            return res.status(404).json({error : "User not Found"})
+        }
+
+        const likedPosts =  await Post.find({_id:{$in : user.likedPosts}})
+                             .populate({
+                                path:"user",
+                                select:"-password"
+                             })
+                             .populate({
+                                path:"comments",
+                                select:["-password", "-email" ,"-following","-followers","-link","-bio"]
+                             })
+
+
+    if (!likedPosts.length) {
+        return res.status(200).json([]); // If no liked posts, return an empty array
+      }
+  
+      res.status(200).json(likedPosts);
+        
+    } catch (error) {
+        console.error(`Error in Get Liked Posts Controller: ${error.message}`);
+      res.status(500).json({ error: "Internal server Error" });
+    }
+  }
+  
