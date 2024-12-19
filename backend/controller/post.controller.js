@@ -15,7 +15,7 @@ import mongoose from "mongoose";
         const user = await User.findOne({_id:userId})
 
         if(!user){
-            return res.status(400).json({error:"User not Found"})
+            return res.status(404).json({error:"User not Found"})
         }
 
         if(!text && !img) {
@@ -220,7 +220,7 @@ import mongoose from "mongoose";
     try {
         
        const userId =  req.user._id;
-       const user = User.findById({_id : userId})
+       const user = await User.findById({_id : userId})
 
        if(!user){
         return res.status(404).json({error : "User Not Found"})
@@ -229,7 +229,7 @@ import mongoose from "mongoose";
        const following =  user.following
 
        const feedPosts  =  await Post.find({user : { $in : following}})
-                             .sort({createAt : -1})
+                             .sort({createdAt : -1})
                             .populate({
                                 path:"user",
                                 select:"-password"
@@ -244,6 +244,36 @@ import mongoose from "mongoose";
 
     } catch (error) {
         console.error(`Error in Get Following Controller: ${error.message}`);
+        res.status(500).json({ error: "Internal server Error" });
+    }
+  }
+
+
+  export const getUsersPosts = async(req,res) => {
+    try {
+
+        const {username} = req.params;
+        const user = await User.findOne({ username});
+
+        if(!user){
+            return res.status(404).json({error:"User Not Found"})
+        }
+
+        const posts = await Post.find({user : user._id})
+                       .sort({createdAt: -1})
+                       .populate({
+                        path:"user",
+                        select:"-password"
+                       })
+                       .populate({
+                        path:"comments",
+                        select:["-password", "-email" ,"-following","-followers","-link","-bio"]
+                       })
+
+                        res.status(200).json(posts)
+        
+    } catch (error) {
+        console.error(`Error in Get Users Posts Controller: ${error.message}`);
         res.status(500).json({ error: "Internal server Error" });
     }
   }
