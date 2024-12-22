@@ -1,11 +1,20 @@
 import React from 'react'
+import { Route , Routes } from 'react-router-dom'
+
+import HomePage from "./pages/home/HomePage";
+import LoginPage from "./pages/auth/login/LoginPage";
+import SignUpPage from "./pages/auth/signup/SignUpPage";
+
 
  const App = () => {
   return (
-    <div>
-    <h1 className='m-10 text-2xl text-green-400  bg-slate-400 rounded-md' >
-      Welcome to my channel
-    </h1>
+    <div className='flex max-w-6xl mx-auto '>
+     <Routes>
+      <Route path="/" element={<HomePage/>}></Route>
+      <Route path="/login" element={<LoginPage/>}></Route>
+      <Route path="/signup" element={<SignUpPage/>}></Route>
+     </Routes>
+
     </div>
   )
 }
